@@ -14,7 +14,16 @@ namespace CSR_Operations
 
     class Matrix_CSR_Format
     {
+
         List<int> nonZeroEntries = new List<int>(), columnInfo = new List<int>(), rowInfo = new List<int>();
+        int[,] rowBounds;
+        public int[,] RowBounds
+        {
+            get
+            {
+                return rowBounds;
+            }
+        }
 
         public int[] NonZeroEntries
         {
@@ -67,8 +76,6 @@ namespace CSR_Operations
                
                 numOfRows = rowsOfMatrix.Length;
                 numOfColumns = convertToCSRFormat(rowsOfMatrix);
-
-                Console.WriteLine($"\nSize of matrix = {NumOfRows} * {NumOfColumns}");
             }
 
             if(fileType == FileType.CSRFromat)
@@ -83,6 +90,8 @@ namespace CSR_Operations
                 numOfColumns = int.Parse(csrMatrixInfo[3]);
                 numOfRows = this.rowInfo.Count - 1;
             }
+
+            generateRowBounds();
         }
 
         public Matrix_CSR_Format(List<int> nonZeroEntries, List<int> rowInfo, List<int> columnInfo, int numColumns)
@@ -117,6 +126,7 @@ namespace CSR_Operations
             }
 
             numOfColumns = numColumns;
+            generateRowBounds();
         }
 
         //converts an array of strings (where each string represents a row) representing a matrix into CSR format 
@@ -265,6 +275,45 @@ namespace CSR_Operations
             rowInfo.Add(rowInfo.Last() + numOfNonZeroNumInRow);
 
             numOfRows++;
+
+            generateRowBounds();
+        }
+
+        public int getRowNumber(int indexInNonZeroEntries)
+        {
+            for(int i = 0; i < numOfRows; i++)
+            {
+                if(rowBounds[i,0] <= indexInNonZeroEntries && indexInNonZeroEntries <= rowBounds[i,1])
+                {
+                    return i;
+                }
+            }
+
+            return -1;
+        }
+
+        private void generateRowBounds()
+        {
+            rowBounds = new int[numOfRows, 2];
+            int lowerBound, upperBound;
+
+            for (int i = 0; i < numOfRows; i++)
+            {
+                lowerBound = RowInfo[i];
+                upperBound = RowInfo[i + 1] - 1;
+
+                // if row has at least one non-zero int in it
+                if (lowerBound <= upperBound)
+                {
+                    rowBounds[i, 0] = lowerBound;
+                    rowBounds[i, 1] = upperBound;
+                }
+                else
+                {
+                    rowBounds[i, 0] = -1;
+                    rowBounds[i, 1] = -1;
+                }
+            }
         }
     }
 }

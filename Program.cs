@@ -8,8 +8,9 @@ namespace CSR_Operations
 {
     class Program
     {
-        static String dataFileRelativePath = @"Data\CSRFormat\M1.txt";
-        
+        static String dataFileRelativePath = @"Data\CSRFormat\M2.txt";
+        static FileType fileType = FileType.CSRFromat;
+
         static void Main(string[] args)
         {
             string exeLocation = System.Reflection.Assembly.GetExecutingAssembly().Location;
@@ -22,7 +23,7 @@ namespace CSR_Operations
 
             try
             {
-                m = new Matrix_CSR_Format(dataFilePath, FileType.CSRFromat);
+                m = new Matrix_CSR_Format(dataFilePath, fileType);
             }
             catch (Exception e)
             {
@@ -39,12 +40,11 @@ namespace CSR_Operations
 
             Console.WriteLine("\n\n*** Multiplying above matrix with a column vector ***\n");
             int[] columnVector = new int[] { 1, 2, 3, 4 };
-            Matrix_CSR_Format product = Matrix_CSR_Format_Operations.MatrixTimesVector(m, columnVector);
+            int[] product = Matrix_CSR_Format_Operations.MatrixTimesVector(m, columnVector);
 
             if (product != null)
             {
-                product.printMatrix();
-                product.printMatrixInCSR();
+                foreach (int i in product) Console.WriteLine(i);
             }
             else
             {

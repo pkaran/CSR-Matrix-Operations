@@ -9,32 +9,73 @@ namespace CSR_Operations
     static class Matrix_CSR_Format_Operations
     {
         // return null if multiplication is not possible
-        public static Matrix_CSR_Format MatrixTimesVector(Matrix_CSR_Format m, int[] columnVector)
+        public static int[] MatrixTimesVector(Matrix_CSR_Format m, int[] columnVector)
         {
             if (m.NumOfColumns != columnVector.Length) return null;
 
             int[] nonZeroEntries = m.NonZeroEntries;
-            int[] newNonZeroEntries = new int[nonZeroEntries.Length];
+            int[] rowInfo = m.RowInfo;
             int[] columnInfo = m.ColumnInfo;
+            int[] resultingVector = new int[m.NumOfRows];
+            int sum = 0, lowerBound = 0, upperBound = 0;
 
-            for(int i = 0; i < nonZeroEntries.Length; i++)
+            // traverse through all rows
+            for(int rowNum = 0; rowNum < m.NumOfRows; rowNum++)
             {
-                newNonZeroEntries[i] = nonZeroEntries[i] * columnVector[columnInfo[i]];
+                lowerBound = rowInfo[rowNum];
+                upperBound = rowInfo[rowNum + 1] - 1;
+
+                // if row has at least one non-zero int in it
+                if (lowerBound <= upperBound)
+                {
+                    for (int i = lowerBound; i <= upperBound; i++)
+                    {
+                        sum += (nonZeroEntries[i] * columnVector[columnInfo[i]]);
+                    }
+
+                    resultingVector[rowNum] = sum;
+                }
+                else
+                {
+                    resultingVector[rowNum] = 0;
+                }
+
+                sum = 0;
             }
 
-            return new Matrix_CSR_Format(newNonZeroEntries.ToList(), m.RowInfo.ToList(), m.ColumnInfo.ToList(), m.NumOfColumns);
+            return resultingVector;
         }
 
         public static Matrix_CSR_Format Transpose(Matrix_CSR_Format m)
         {
-            Matrix_CSR_Format mTranspose = new Matrix_CSR_Format(null, null, null, m.NumOfRows);
+            int numOfRowsInTranspose = m.NumOfColumns;
 
-            for(int i = 0; i < m.NumOfColumns; i++)
+            Csr_matrix_info[] newMatrixRowInfo = new Csr_matrix_info[numOfRowsInTranspose];
+
+            for (int i = 0; i < numOfRowsInTranspose; i++)
             {
-                mTranspose.addRow(m.getColumn(i));
+                newMatrixRowInfo[i].nonZeroEntries = new List<int>();
+                newMatrixRowInfo[i].columnInfo = new List<int>();
             }
 
-            return mTranspose;
+            for(int i = 0; i < m.NonZeroEntries.Length; i++)
+            {
+                newMatrixRowInfo[m.ColumnInfo[i]].nonZeroEntries.Add(m.NonZeroEntries[i]);
+                newMatrixRowInfo[m.ColumnInfo[i]].columnInfo.Add(m.getRowNumber(i));
+            }
+
+            List<int> nonZeroEntries = new List<int>(), columnInfo = new List<int>();
+            int[] rowInfo = new int[numOfRowsInTranspose + 1];
+
+            for (int i = 0; i < newMatrixRowInfo.Length; i++)
+            {
+                nonZeroEntries.AddRange(newMatrixRowInfo[i].nonZeroEntries);
+                columnInfo.AddRange(newMatrixRowInfo[i].columnInfo);
+
+                rowInfo[i + 1] = rowInfo[i] + newMatrixRowInfo[i].nonZeroEntries.Count;
+            }
+
+            return new Matrix_CSR_Format(nonZeroEntries, rowInfo.ToList<int>(), columnInfo, m.NumOfRows);
         }
 
         //return null if matrix multiplication is not possible
@@ -42,42 +83,65 @@ namespace CSR_Operations
         {
             if (m1.NumOfColumns != m2.NumOfRows) return null;
 
-            Matrix_CSR_Format productMatrix = new Matrix_CSR_Format(null, null, null, m2.NumOfColumns);
-            int[] newRow = new int[m2.NumOfColumns];
-            int temp = 0;
+            int numOfRowsInProductMatrix = m1.NumOfRows;
 
-            for(int i = 0; i < m1.NumOfRows; i++)
+            Csr_matrix_info[] newMatrixRowInfo = new Csr_matrix_info[numOfRowsInProductMatrix];
+
+            for (int i = 0; i < numOfRowsInProductMatrix; i++)
             {
-                for(int j = 0; j < m2.NumOfColumns; j++)
-                {
-                    newRow[temp++] = innerProduct(m1.getRow(i), m2.getColumn(j));
-                }
-
-                productMatrix.addRow(newRow);
-                temp = 0;
-                Array.Clear(newRow, 0, newRow.Length);
+                newMatrixRowInfo[i].nonZeroEntries = new List<int>();
+                newMatrixRowInfo[i].columnInfo = new List<int>();
             }
 
-            return productMatrix;
-        }
-
-        // throws FormatException if the length of arr1 and arr2 are not equal
-        private static int innerProduct(int[] arr1, int[] arr2)
-        {
-            if(arr1.Length != arr2.Length)
-            {
-                throw new FormatException();
-            }
-
+            int[,] m1RowBounds = m1.RowBounds, m2RowBounds = m2.RowBounds;
             int sum = 0;
 
-            for(int i = 0; i < arr1.Length; i++)
+            for (int i = 0; i < numOfRowsInProductMatrix; i++)
             {
-                if (arr1[i] == 0 || arr2[i] == 0) continue;
-                sum += (arr1[i] * arr2[i]);
+                if (m1RowBounds[i, 0] == -1 || m1RowBounds[i, 1] == -1) continue;
+                //sum = 0;
+
+                for (int j = 0; j < m1.NumOfColumns; j++)
+                {
+                    for(int k = m1RowBounds[i, 0]; k <= m1RowBounds[i, 1]; k++)
+                    {
+                        if (m2RowBounds[m1.ColumnInfo[k], 0] == -1 || m2RowBounds[m1.ColumnInfo[k], 1] == -1) continue;
+
+                        for(int z = m2RowBounds[m1.ColumnInfo[k], 0]; z <= m2RowBounds[m1.ColumnInfo[k], 1]; z++)
+                        {
+                            if(m2.ColumnInfo[z] == j)
+                            {
+                                sum += (m1.NonZeroEntries[k] * m2.NonZeroEntries[z]);
+                            }
+                        }
+                    }
+
+                    if(sum != 0)
+                    {
+                        newMatrixRowInfo[i].nonZeroEntries.Add(sum);
+                        newMatrixRowInfo[i].columnInfo.Add(j);
+                        sum = 0;
+                    }  
+                }
             }
 
-            return sum;
+            List<int> nonZeroEntries = new List<int>(), columnInfo = new List<int>();
+            int[] rowInfo = new int[numOfRowsInProductMatrix + 1];
+
+            for (int i = 0; i < newMatrixRowInfo.Length; i++)
+            {
+                nonZeroEntries.AddRange(newMatrixRowInfo[i].nonZeroEntries);
+                columnInfo.AddRange(newMatrixRowInfo[i].columnInfo);
+
+                rowInfo[i + 1] = rowInfo[i] + newMatrixRowInfo[i].nonZeroEntries.Count;
+            }
+
+            return new Matrix_CSR_Format(nonZeroEntries, rowInfo.ToList<int>(), columnInfo, numOfRowsInProductMatrix);
+        }
+
+        private struct Csr_matrix_info
+        {
+            public List<int> nonZeroEntries , columnInfo ;
         }
     }
 }
