@@ -9,15 +9,20 @@ namespace CSR_Operations
     static class Matrix_CSR_Format_Operations
     {
         // return null if multiplication is not possible
-        public static int[] MatrixTimesVector(Matrix_CSR_Format m, int[] columnVector)
+        public static Matrix_CSR_Format MatrixTimesComlumVector(Matrix_CSR_Format m, decimal[] columnVector)
         {
             if (m.NumOfColumns != columnVector.Length) return null;
 
-            int[] nonZeroEntries = m.NonZeroEntries;
+            decimal[] nonZeroEntries = m.NonZeroEntries;
             int[] rowInfo = m.RowInfo;
             int[] columnInfo = m.ColumnInfo;
-            int[] resultingVector = new int[m.NumOfRows];
-            int sum = 0, lowerBound = 0, upperBound = 0;
+
+            List<int> productColumnInfo = new List<int>(), productRowInfo = new List<int>();
+            List<decimal> productNonZeroEntries = new List<decimal>();
+            productRowInfo.Add(0);
+
+            decimal sum = 0;
+            int lowerBound = 0, upperBound = 0;
 
             // traverse through all rows
             for(int rowNum = 0; rowNum < m.NumOfRows; rowNum++)
@@ -33,17 +38,19 @@ namespace CSR_Operations
                         sum += (nonZeroEntries[i] * columnVector[columnInfo[i]]);
                     }
 
-                    resultingVector[rowNum] = sum;
+                    productNonZeroEntries.Add(sum);
+                    productColumnInfo.Add(0);
+                    productRowInfo.Add(productRowInfo.Last() + 1);
                 }
                 else
                 {
-                    resultingVector[rowNum] = 0;
+                    productRowInfo.Add(productRowInfo.Last());
                 }
 
                 sum = 0;
             }
 
-            return resultingVector;
+            return new Matrix_CSR_Format(productNonZeroEntries, productRowInfo, productColumnInfo, 1);
         }
 
         public static Matrix_CSR_Format Transpose(Matrix_CSR_Format m)
@@ -54,7 +61,7 @@ namespace CSR_Operations
 
             for (int i = 0; i < numOfRowsInTranspose; i++)
             {
-                newMatrixRowInfo[i].nonZeroEntries = new List<int>();
+                newMatrixRowInfo[i].nonZeroEntries = new List<decimal>();
                 newMatrixRowInfo[i].columnInfo = new List<int>();
             }
 
@@ -64,7 +71,8 @@ namespace CSR_Operations
                 newMatrixRowInfo[m.ColumnInfo[i]].columnInfo.Add(m.getRowNumber(i));
             }
 
-            List<int> nonZeroEntries = new List<int>(), columnInfo = new List<int>();
+            List<decimal> nonZeroEntries = new List<decimal>();
+            List<int> columnInfo = new List<int>();
             int[] rowInfo = new int[numOfRowsInTranspose + 1];
 
             for (int i = 0; i < newMatrixRowInfo.Length; i++)
@@ -89,12 +97,12 @@ namespace CSR_Operations
 
             for (int i = 0; i < numOfRowsInProductMatrix; i++)
             {
-                newMatrixRowInfo[i].nonZeroEntries = new List<int>();
+                newMatrixRowInfo[i].nonZeroEntries = new List<decimal>();
                 newMatrixRowInfo[i].columnInfo = new List<int>();
             }
 
             int[,] m1RowBounds = m1.RowBounds, m2RowBounds = m2.RowBounds;
-            int sum = 0;
+            decimal sum = 0;
 
             for (int i = 0; i < numOfRowsInProductMatrix; i++)
             {
@@ -125,7 +133,8 @@ namespace CSR_Operations
                 }
             }
 
-            List<int> nonZeroEntries = new List<int>(), columnInfo = new List<int>();
+            List<decimal> nonZeroEntries = new List<decimal>();
+            List<int> columnInfo = new List<int>();
             int[] rowInfo = new int[numOfRowsInProductMatrix + 1];
 
             for (int i = 0; i < newMatrixRowInfo.Length; i++)
@@ -141,7 +150,8 @@ namespace CSR_Operations
 
         private struct Csr_matrix_info
         {
-            public List<int> nonZeroEntries , columnInfo ;
+            public List<int> columnInfo ;
+            public List<decimal> nonZeroEntries;
         }
     }
 }

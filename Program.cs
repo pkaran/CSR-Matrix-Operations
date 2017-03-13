@@ -8,7 +8,7 @@ namespace CSR_Operations
 {
     class Program
     {
-        static String dataFileRelativePath = @"Data\CSRFormat\M2.txt";
+        static String dataFileRelativePath = @"Data\CSRFormat\M3.txt";
         static FileType fileType = FileType.CSRFromat;
 
         static void Main(string[] args)
@@ -39,12 +39,13 @@ namespace CSR_Operations
             m.printMatrixInCSR();
 
             Console.WriteLine("\n\n*** Multiplying above matrix with a column vector ***\n");
-            int[] columnVector = new int[] { 1, 2, 3, 4 };
-            int[] product = Matrix_CSR_Format_Operations.MatrixTimesVector(m, columnVector);
+            decimal[] columnVector = new decimal[] { 1, 2, 3, 4 };
+            Matrix_CSR_Format product = Matrix_CSR_Format_Operations.MatrixTimesComlumVector(m, columnVector);
 
             if (product != null)
             {
-                foreach (int i in product) Console.WriteLine(i);
+                product.printMatrix();
+                product.printMatrixInCSR();
             }
             else
             {

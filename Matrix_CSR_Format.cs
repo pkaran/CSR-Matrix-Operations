@@ -15,7 +15,9 @@ namespace CSR_Operations
     class Matrix_CSR_Format
     {
 
-        List<int> nonZeroEntries = new List<int>(), columnInfo = new List<int>(), rowInfo = new List<int>();
+        List<decimal> nonZeroEntries = new List<decimal>();
+        List<int> columnInfo = new List<int>(), rowInfo = new List<int>();
+
         int[,] rowBounds;
         public int[,] RowBounds
         {
@@ -25,7 +27,7 @@ namespace CSR_Operations
             }
         }
 
-        public int[] NonZeroEntries
+        public decimal[] NonZeroEntries
         {
             get
             {
@@ -83,7 +85,7 @@ namespace CSR_Operations
                 // Read each line of the file into a string array. Each element of the array is one line of the file.
                 string[] csrMatrixInfo = System.IO.File.ReadAllLines(filePath);
                 
-                this.nonZeroEntries = csrMatrixInfo[0].Split(' ').Select(int.Parse).ToList<int>();
+                this.nonZeroEntries = csrMatrixInfo[0].Split(' ').Select(decimal.Parse).ToList<decimal>();
                 this.rowInfo = csrMatrixInfo[1].Split(' ').Select(int.Parse).ToList<int>();
                 this.columnInfo = csrMatrixInfo[2].Split(' ').Select(int.Parse).ToList<int>();
 
@@ -94,11 +96,11 @@ namespace CSR_Operations
             generateRowBounds();
         }
 
-        public Matrix_CSR_Format(List<int> nonZeroEntries, List<int> rowInfo, List<int> columnInfo, int numColumns)
+        public Matrix_CSR_Format(List<decimal> nonZeroEntries, List<int> rowInfo, List<int> columnInfo, int numColumns)
         {
             if(nonZeroEntries == null)
             {
-                nonZeroEntries = new List<int>();
+                nonZeroEntries = new List<decimal>();
             }
             else
             {
@@ -134,15 +136,14 @@ namespace CSR_Operations
         private int convertToCSRFormat(string[] rows)
         {
             int numColumns = -1;
-            int[] matrixRow;    // temp int array
-            int num;            // temp int
-            bool firstNumInRow = true;
+            decimal[] matrixRow;    // temp int array
+            decimal num;            // temp int
             int numOfNonZeroNumInRow = 0;
 
             // traverse through all rows of matrix
             for (int i = 0; i < rows.Length; i++)
             {
-                matrixRow = rows[i].Split(' ').Select(int.Parse).ToArray();
+                matrixRow = rows[i].Split(' ').Select(decimal.Parse).ToArray();
 
                 if (i == 0)
                 {
@@ -174,7 +175,7 @@ namespace CSR_Operations
         public void printMatrixInCSR()
         {
             Console.WriteLine("\nNon zero entries : ");
-            foreach (int i in nonZeroEntries)
+            foreach (decimal i in nonZeroEntries)
             {
                 Console.Write(i + " ");
             }
@@ -195,21 +196,21 @@ namespace CSR_Operations
         public void printMatrix()
         {
             string rowString = "";
-            int[] row;
+            decimal[] row;
 
             // traverse through all rows
             for(int i = 0; i < NumOfRows; i++)
             {
                 row = getRow(i);
-                foreach(int j in row) rowString += String.Format("{0} ", j);
+                foreach(decimal j in row) rowString += String.Format("{0} ", j);
                 Console.WriteLine(rowString);
                 rowString = "";
             }
         }
 
-        public int[] getRow(int rowNum)
+        public decimal[] getRow(int rowNum)
         {
-            int[] row = new int[NumOfColumns];
+            decimal[] row = new decimal[NumOfColumns];
 
             int lowerBound = rowInfo[rowNum], upperBound = rowInfo[rowNum + 1] - 1;
 
@@ -225,9 +226,9 @@ namespace CSR_Operations
             return row;
         }
 
-        public int[] getColumn(int columnNum)
+        public decimal[] getColumn(int columnNum)
         {
-            int[] column = new int[NumOfRows];
+            decimal[] column = new decimal[NumOfRows];
 
             for(int rowNum = 0; rowNum < NumOfRows; rowNum++)
             {
@@ -249,9 +250,10 @@ namespace CSR_Operations
             return column;
         }
 
-        public void addRow(int[] newRow)
+        public void addRow(decimal[] newRow)
         {
-            int num, numOfNonZeroNumInRow = 0;        // temp int variable
+            decimal num;
+            int numOfNonZeroNumInRow = 0;        // temp int variable
 
             if (numOfRows == 0)
             {
