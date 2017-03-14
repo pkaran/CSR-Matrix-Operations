@@ -17,8 +17,8 @@ namespace CSR_Operations
             string exeDir = System.IO.Path.GetDirectoryName(exeLocation);
             string dataFilePath = System.IO.Path.Combine(exeDir, dataFileRelativePath);
 
-            //demoCSROperations(dataFilePath);
-            multiplyDemo();
+            demoCSROperations(dataFilePath);
+            //multiplyDemo();
 
             Console.Write("\n\nType anything and press enter to exit : ");
             Console.ReadLine();
@@ -49,12 +49,11 @@ namespace CSR_Operations
 
             Console.WriteLine("\n\n*** Multiplying above matrix with a column vector ***\n");
             decimal[] columnVector = new decimal[] { 1, 2, 3, 4 };
-            Matrix_CSR_Format product = Matrix_CSR_Format_Operations.MatrixTimesComlumVector(m, columnVector);
+            decimal[] product = Matrix_CSR_Format_Operations.MatrixTimesComlumVector(m, columnVector);
 
             if (product != null)
             {
-                product.printMatrix();
-                product.printMatrixInCSR();
+                foreach (int i in product) Console.WriteLine(i);
             }
             else
             {

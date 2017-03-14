@@ -9,7 +9,7 @@ namespace CSR_Operations
     static class Matrix_CSR_Format_Operations
     {
         // return null if multiplication is not possible
-        public static Matrix_CSR_Format MatrixTimesComlumVector(Matrix_CSR_Format m, decimal[] columnVector)
+        public static decimal[] MatrixTimesComlumVector(Matrix_CSR_Format m, decimal[] columnVector)
         {
             if (m.NumOfColumns != columnVector.Length) return null;
 
@@ -17,10 +17,7 @@ namespace CSR_Operations
             int[] rowInfo = m.RowInfo;
             int[] columnInfo = m.ColumnInfo;
 
-            List<int> productColumnInfo = new List<int>(), productRowInfo = new List<int>();
-            List<decimal> productNonZeroEntries = new List<decimal>();
-            productRowInfo.Add(0);
-
+            decimal[] productVector = new decimal[m.NumOfRows];
             decimal sum = 0;
             int lowerBound = 0, upperBound = 0;
 
@@ -38,19 +35,13 @@ namespace CSR_Operations
                         sum += (nonZeroEntries[i] * columnVector[columnInfo[i]]);
                     }
 
-                    productNonZeroEntries.Add(sum);
-                    productColumnInfo.Add(0);
-                    productRowInfo.Add(productRowInfo.Last() + 1);
-                }
-                else
-                {
-                    productRowInfo.Add(productRowInfo.Last());
+                    productVector[rowNum] = sum;
                 }
 
                 sum = 0;
             }
 
-            return new Matrix_CSR_Format(productNonZeroEntries, productRowInfo, productColumnInfo, 1);
+            return productVector;
         }
 
         public static Matrix_CSR_Format Transpose(Matrix_CSR_Format m)
