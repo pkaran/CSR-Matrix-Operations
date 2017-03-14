@@ -103,13 +103,16 @@ namespace CSR_Operations
 
             int[,] m1RowBounds = m1.RowBounds, m2RowBounds = m2.RowBounds;
             decimal sum = 0;
+            int operationsCount = 0;
 
+            // for each new row of product matrix
             for (int i = 0; i < numOfRowsInProductMatrix; i++)
             {
+                // if row of m1 has no non-zero elements, continue
                 if (m1RowBounds[i, 0] == -1 || m1RowBounds[i, 1] == -1) continue;
-                //sum = 0;
-
-                for (int j = 0; j < m1.NumOfColumns; j++)
+                
+                // for each column in m2
+                for (int j = 0; j < m2.NumOfColumns; j++)
                 {
                     for(int k = m1RowBounds[i, 0]; k <= m1RowBounds[i, 1]; k++)
                     {
@@ -119,6 +122,7 @@ namespace CSR_Operations
                         {
                             if(m2.ColumnInfo[z] == j)
                             {
+                                operationsCount += 1;
                                 sum += (m1.NonZeroEntries[k] * m2.NonZeroEntries[z]);
                             }
                         }
@@ -145,7 +149,7 @@ namespace CSR_Operations
                 rowInfo[i + 1] = rowInfo[i] + newMatrixRowInfo[i].nonZeroEntries.Count;
             }
 
-            return new Matrix_CSR_Format(nonZeroEntries, rowInfo.ToList<int>(), columnInfo, numOfRowsInProductMatrix);
+            return new Matrix_CSR_Format(nonZeroEntries, rowInfo.ToList<int>(), columnInfo, m2.NumOfColumns);
         }
 
         private struct Csr_matrix_info

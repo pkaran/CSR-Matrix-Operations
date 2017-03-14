@@ -8,7 +8,7 @@ namespace CSR_Operations
 {
     class Program
     {
-        static String dataFileRelativePath = @"Data\CSRFormat\M3.txt";
+        static String dataFileRelativePath = @"Data\CSRFormat\M1.txt";
         static FileType fileType = FileType.CSRFromat;
 
         static void Main(string[] args)
@@ -17,6 +17,15 @@ namespace CSR_Operations
             string exeDir = System.IO.Path.GetDirectoryName(exeLocation);
             string dataFilePath = System.IO.Path.Combine(exeDir, dataFileRelativePath);
 
+            //demoCSROperations(dataFilePath);
+            multiplyDemo();
+
+            Console.Write("\n\nType anything and press enter to exit : ");
+            Console.ReadLine();
+        }
+
+        static void demoCSROperations(String dataFilePath)
+        {
             Console.WriteLine("Following is the given matrix : \n");
 
             Matrix_CSR_Format m;
@@ -58,12 +67,12 @@ namespace CSR_Operations
             transposeMatrix.printMatrixInCSR();
 
             Console.WriteLine("\n\n*** Product of 2 matrices ***:\n");
-            
+
             try
             {
                 Matrix_CSR_Format productMatrix = Matrix_CSR_Format_Operations.Multiply(m, transposeMatrix);
 
-                if(productMatrix != null)
+                if (productMatrix != null)
                 {
                     productMatrix.printMatrix();
                     productMatrix.printMatrixInCSR();
@@ -72,16 +81,21 @@ namespace CSR_Operations
                 {
                     Console.WriteLine("Matrix multiplication is not possible, check the sizes of both the matrices");
                 }
-                
+
             }
-            catch(FormatException e)
+            catch (FormatException e)
             {
                 Console.WriteLine("\nERROR : The inputs passed on to Matrix_CSR_Format_Operations.innerProduct() were not in proper format");
                 Console.WriteLine("Multiplication of 2 matrices failed !");
             }
+        }
 
-            Console.Write("\n\nType anything and press enter to exit : ");
-            Console.ReadLine();
+        static void multiplyDemo()
+        {
+            Matrix_CSR_Format m1 = new Matrix_CSR_Format(@"C:\Users\pkara\OneDrive\College\MTH 343\Final Project\CSR_Operations\CSR_Operations\MM1.txt", FileType.NormalFormat);
+            Matrix_CSR_Format m2 = new Matrix_CSR_Format(@"C:\Users\pkara\OneDrive\College\MTH 343\Final Project\CSR_Operations\CSR_Operations\MM2.txt", FileType.NormalFormat);
+
+            Matrix_CSR_Format_Operations.Multiply(m1, m2).printMatrix();
         }
     }
 }
