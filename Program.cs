@@ -1,28 +1,28 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace CSR_Operations
 {
     class Program
     {
-        static String dataFileRelativePath = @"Data\CSRFormat\M1.txt";
-        static FileType fileType = FileType.CSRFromat;
-
         static void Main(string[] args)
         {
-            string exeLocation = System.Reflection.Assembly.GetExecutingAssembly().Location;
-            string exeDir = System.IO.Path.GetDirectoryName(exeLocation);
-            string dataFilePath = System.IO.Path.Combine(exeDir, dataFileRelativePath);
+            string dataFilePath = @"C:\Users\pkara\OneDrive\College\MTH 343\Final Project\CSR_Operations\CSR_Operations\M1.txt";
+            //demoCSROperations(dataFilePath);
 
-            demoCSROperations(dataFilePath);
-            //multiplyDemo();
+            dataFilePath = @"C:\Users\pkara\OneDrive\College\MTH 343\Final Project\CSR_Operations\CSR_Operations\M2.txt";
+            GMRES_demo(dataFilePath);
 
             Console.Write("\n\nType anything and press enter to exit : ");
             Console.ReadLine();
         }
+
+        /* Demonstrates the following implemented library functions :
+           1. Matrix (stored in CSR format) times a vector
+           2. Transpose of a Matrix (stored in CSR format), resulting matrix is stored in CSR format
+           3. Matrix (stored in CSR format) times a matrix (stored in CSR format), resulting matrix is stored in CSR format
+
+           dataFilePath is path to file containing matrix stored in either CSRFromat, NormalFormat or MTH343Format
+         */
 
         static void demoCSROperations(String dataFilePath)
         {
@@ -32,7 +32,7 @@ namespace CSR_Operations
 
             try
             {
-                m = new Matrix_CSR_Format(dataFilePath, fileType);
+                m = new Matrix_CSR_Format(dataFilePath, FileType.NormalFormat);
             }
             catch (Exception e)
             {
@@ -44,16 +44,16 @@ namespace CSR_Operations
                 return;
             }
 
-            m.printMatrix();
+            //m.printMatrix();
             m.printMatrixInCSR();
 
             Console.WriteLine("\n\n*** Multiplying above matrix with a column vector ***\n");
-            decimal[] columnVector = new decimal[] { 1, 2, 3, 4 };
-            decimal[] product = Matrix_CSR_Format_Operations.MatrixTimesComlumVector(m, columnVector);
+            double[] columnVector = generateVector(m.NumOfColumns, 2);
+            double[] product = Matrix_CSR_Format_Operations.MatrixTimesComlumVector(m, columnVector);
 
             if (product != null)
             {
-                foreach (int i in product) Console.WriteLine(i);
+                foreach (double i in product) Console.WriteLine("{0:0.000}", i);
             }
             else
             {
@@ -62,7 +62,7 @@ namespace CSR_Operations
 
             Console.WriteLine("\n\n*** Transpose of matrix ***\n");
             Matrix_CSR_Format transposeMatrix = Matrix_CSR_Format_Operations.Transpose(m);
-            transposeMatrix.printMatrix();
+            //transposeMatrix.printMatrix();
             transposeMatrix.printMatrixInCSR();
 
             Console.WriteLine("\n\n*** Product of 2 matrices ***:\n");
@@ -73,7 +73,7 @@ namespace CSR_Operations
 
                 if (productMatrix != null)
                 {
-                    productMatrix.printMatrix();
+                    //productMatrix.printMatrix();
                     productMatrix.printMatrixInCSR();
                 }
                 else
@@ -89,12 +89,44 @@ namespace CSR_Operations
             }
         }
 
-        static void multiplyDemo()
-        {
-            Matrix_CSR_Format m1 = new Matrix_CSR_Format(@"C:\Users\pkara\OneDrive\College\MTH 343\Final Project\CSR_Operations\CSR_Operations\MM1.txt", FileType.NormalFormat);
-            Matrix_CSR_Format m2 = new Matrix_CSR_Format(@"C:\Users\pkara\OneDrive\College\MTH 343\Final Project\CSR_Operations\CSR_Operations\MM2.txt", FileType.NormalFormat);
+        /*
+            The function below demonstrates a sample use of the GMRES algorithm on an unsymmetric sparse matrix.
+            The GMRES class [more specifically, GMRES.solveUsingGMRES()] can be used to solve Ax = b where A is
+            an unsymmetric sparse matrix. 
 
-            Matrix_CSR_Format_Operations.Multiply(m1, m2).printMatrix();
+            dataFilePath is path to file containing matrix stored in either CSRFromat, NormalFormat or MTH343Format
+         */
+        static void GMRES_demo(String dataFilePath)
+        {
+            Matrix_CSR_Format A = new Matrix_CSR_Format(dataFilePath, FileType.MTH343Format);
+            double[] ranX = generateVector(A.NumOfColumns, 3);
+            double[] b = Matrix_CSR_Format_Operations.MatrixTimesComlumVector(A, ranX);
+
+            double[] initialX = generateVector(A.NumOfColumns, 75);
+            double tolerance = 10E-6;
+            int maxIterations = A.NumOfColumns;
+            int restartAfterEveryNIterations = A.NumOfColumns;
+
+            DateTime startTime = DateTime.Now;
+
+            GMRES.solveUsingGMRES(tolerance, maxIterations, restartAfterEveryNIterations, A, b, initialX);
+
+            DateTime endTime = DateTime.Now;
+
+            Console.WriteLine("\nTotal Time taken = {0} seconds", endTime.Subtract(startTime).TotalSeconds);
+        }
+
+        // generates a vector with size length and initializes each entry in the vector with initializeWith
+        static double[] generateVector(int length, int initializeWith)
+        {
+            double[] vector = new double[length];
+
+            for(int i = 0; i < length; i++)
+            {
+                vector[i] = initializeWith;
+            }
+
+            return vector;
         }
     }
 }

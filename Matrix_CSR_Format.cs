@@ -1,24 +1,27 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace CSR_Operations
 {
+    // each enum constant is used to represent data format of a data file containing data about a matrix
     enum FileType
     {
         CSRFromat,
-        NormalFormat
+        NormalFormat,
+        MTH343Format
     }
-
+    
     class Matrix_CSR_Format
     {
 
-        List<decimal> nonZeroEntries = new List<decimal>();
+        List<double> nonZeroEntries = new List<double>();
         List<int> columnInfo = new List<int>(), rowInfo = new List<int>();
 
+        int numOfRows, numOfColumns;
         int[,] rowBounds;
+
+        // defining properties for the class
         public int[,] RowBounds
         {
             get
@@ -27,7 +30,7 @@ namespace CSR_Operations
             }
         }
 
-        public decimal[] NonZeroEntries
+        public double[] NonZeroEntries
         {
             get
             {
@@ -50,8 +53,6 @@ namespace CSR_Operations
                 return rowInfo.ToArray();
             }
         }
-
-        int numOfRows, numOfColumns;
 
         public int NumOfRows
         {
@@ -85,7 +86,7 @@ namespace CSR_Operations
                 // Read each line of the file into a string array. Each element of the array is one line of the file.
                 string[] csrMatrixInfo = System.IO.File.ReadAllLines(filePath);
                 
-                this.nonZeroEntries = csrMatrixInfo[0].Split(' ').Select(decimal.Parse).ToList<decimal>();
+                this.nonZeroEntries = csrMatrixInfo[0].Split(' ').Select(double.Parse).ToList<double>();
                 this.rowInfo = csrMatrixInfo[1].Split(' ').Select(int.Parse).ToList<int>();
                 this.columnInfo = csrMatrixInfo[2].Split(' ').Select(int.Parse).ToList<int>();
 
@@ -93,14 +94,57 @@ namespace CSR_Operations
                 numOfRows = this.rowInfo.Count - 1;
             }
 
+            if (fileType == FileType.MTH343Format)
+            {
+                // Read each line of the file into a string array. Each element of the array is one line of the file.
+                string[] csrMatrixInfo = System.IO.File.ReadAllLines(filePath);
+                double[] lineInfo;
+                bool firstLine = true;
+                rowInfo.Add(0);
+                Csr_matrix_info[] newMatrixRowInfo = null;
+
+                foreach (String line in csrMatrixInfo)
+                {
+                    lineInfo = line.Split(' ').Select(double.Parse).ToArray();
+
+                    if (firstLine == true)
+                    {
+                        numOfRows = (int)lineInfo[0];
+                        numOfColumns = (int)lineInfo[1];
+                        firstLine = false;
+
+                        newMatrixRowInfo = new Csr_matrix_info[NumOfRows];
+
+                        for (int i = 0; i < NumOfRows; i++)
+                        {
+                            newMatrixRowInfo[i].nonZeroEntries = new List<double>();
+                            newMatrixRowInfo[i].columnInfo = new List<int>();
+                        }
+
+                        continue;
+                    }
+
+                    newMatrixRowInfo[(int)lineInfo[0] - 1].nonZeroEntries.Add(lineInfo[2]);
+                    newMatrixRowInfo[(int)lineInfo[0] - 1].columnInfo.Add((int)lineInfo[1] - 1);
+                }
+
+                for (int i = 0; i < newMatrixRowInfo.Length; i++)
+                {
+                    nonZeroEntries.AddRange(newMatrixRowInfo[i].nonZeroEntries);
+                    columnInfo.AddRange(newMatrixRowInfo[i].columnInfo);
+
+                    rowInfo.Add(rowInfo.Last() + newMatrixRowInfo[i].nonZeroEntries.Count);
+                }
+            }
+
             generateRowBounds();
         }
 
-        public Matrix_CSR_Format(List<decimal> nonZeroEntries, List<int> rowInfo, List<int> columnInfo, int numColumns)
+        public Matrix_CSR_Format(List<double> nonZeroEntries, List<int> rowInfo, List<int> columnInfo, int numColumns)
         {
             if(nonZeroEntries == null)
             {
-                nonZeroEntries = new List<decimal>();
+                nonZeroEntries = new List<double>();
             }
             else
             {
@@ -136,14 +180,14 @@ namespace CSR_Operations
         private int convertToCSRFormat(string[] rows)
         {
             int numColumns = -1;
-            decimal[] matrixRow;    // temp int array
-            decimal num;            // temp int
+            double[] matrixRow;    // temp int array
+            double num;            // temp int
             int numOfNonZeroNumInRow = 0;
 
             // traverse through all rows of matrix
             for (int i = 0; i < rows.Length; i++)
             {
-                matrixRow = rows[i].Split(' ').Select(decimal.Parse).ToArray();
+                matrixRow = rows[i].Split(' ').Select(double.Parse).ToArray();
 
                 if (i == 0)
                 {
@@ -172,12 +216,13 @@ namespace CSR_Operations
             return numColumns;
         }
         
+        // print matrix to console in CSR format
         public void printMatrixInCSR()
         {
             Console.WriteLine("\nNon zero entries : ");
-            foreach (decimal i in nonZeroEntries)
+            foreach (double i in nonZeroEntries)
             {
-                Console.Write(i + " ");
+                Console.Write("{0:0.000} ", i);
             }
 
             Console.WriteLine("\n\nRow Info : ");
@@ -193,24 +238,26 @@ namespace CSR_Operations
             }
         }
 
+        // print matrix in human readable format 
         public void printMatrix()
         {
             string rowString = "";
-            decimal[] row;
+            double[] row;
 
             // traverse through all rows
             for(int i = 0; i < NumOfRows; i++)
             {
                 row = getRow(i);
-                foreach(decimal j in row) rowString += String.Format("{0} ", j);
+                foreach(double j in row) rowString += String.Format("{0:0.000} ", j);
                 Console.WriteLine(rowString);
                 rowString = "";
             }
         }
 
-        public decimal[] getRow(int rowNum)
+        // get row rowNum from the matrix, the length of the returned double array is equal to the number of columns in matrix
+        public double[] getRow(int rowNum)
         {
-            decimal[] row = new decimal[NumOfColumns];
+            double[] row = new double[NumOfColumns];
 
             int lowerBound = rowInfo[rowNum], upperBound = rowInfo[rowNum + 1] - 1;
 
@@ -226,33 +273,11 @@ namespace CSR_Operations
             return row;
         }
 
-        public decimal[] getColumn(int columnNum)
+        // adds a new row to the matrix, newRow must be of length equal to the number of columns in matrix
+        // newRow should contain all entries (including 0's) in the row to be added to the matrix
+        public void addRow(double[] newRow)
         {
-            decimal[] column = new decimal[NumOfRows];
-
-            for(int rowNum = 0; rowNum < NumOfRows; rowNum++)
-            {
-                int lowerBound = rowInfo[rowNum], upperBound = rowInfo[rowNum + 1] - 1;
-
-                // if row has at least one non-zero int in it
-                if (lowerBound <= upperBound)
-                {
-                    for (int i = lowerBound; i <= upperBound; i++)
-                    {
-                        if(columnInfo[i] == columnNum)
-                        {
-                            column[rowNum] = nonZeroEntries[i];
-                        }
-                    }
-                }
-            }
-
-            return column;
-        }
-
-        public void addRow(decimal[] newRow)
-        {
-            decimal num;
+            double num;
             int numOfNonZeroNumInRow = 0;        // temp int variable
 
             if (numOfRows == 0)
@@ -281,6 +306,7 @@ namespace CSR_Operations
             generateRowBounds();
         }
 
+        //returns row number of entry in matrix stored at index indexInNonZeroEntries of nonZeroEntries list
         public int getRowNumber(int indexInNonZeroEntries)
         {
             for(int i = 0; i < numOfRows; i++)
@@ -294,6 +320,7 @@ namespace CSR_Operations
             return -1;
         }
 
+        //generates (upper and lower) row bounds for each row in matrix 
         private void generateRowBounds()
         {
             rowBounds = new int[numOfRows, 2];
@@ -316,6 +343,12 @@ namespace CSR_Operations
                     rowBounds[i, 1] = -1;
                 }
             }
+        }
+
+        private struct Csr_matrix_info
+        {
+            public List<int> columnInfo;
+            public List<double> nonZeroEntries;
         }
     }
 }
